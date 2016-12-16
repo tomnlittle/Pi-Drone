@@ -21,7 +21,7 @@ SPI_Handler.o: SPI_Handler.cpp SPI_Handler.h
 
 BNO055_Interface.o: BNO055_Interface.cpp BNO055_Interface.h bno055.h
 
-bno055.o: bno055.c bno055.h
+bno055.o: BNO055_driver-master_src/bno055.c BNO055_driver-master_src/bno055.h
 
 clean :
 	rm -f main $(OBJS) core

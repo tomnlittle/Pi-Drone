@@ -12,7 +12,7 @@
 
 extern "C" {
   //this tells the compiler that this is a header for c code
-  #include "bno055.h"
+  #include "BNO055_driver-master_src/bno055.h"
 }
 
 #define BNO055_DEGREE_CONSTANT                  16.00
