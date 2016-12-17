@@ -1,7 +1,7 @@
 
 #include "motor_class.h"
 
-//This assumes that motor_pwm has already been initialised to the corrent 
+//This assumes that motor_pwm has already been initialised to the correct 
 void Motor::init(int motor_pin, PCA9685 motor_pwm){
     pin = motor_pin;
     speed = 0.0;

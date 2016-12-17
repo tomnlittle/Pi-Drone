@@ -15,7 +15,9 @@ BNO055_Interface::BNO055_Interface(){
     quaternion_Z = BNO055_INIT_VALUE;
 }
 
-BNO055_Interface::~BNO055_Interface(){}
+BNO055_Interface::~BNO055_Interface(){
+    spi.closefd();
+}
 
 
 void BNO055_Interface::InitialiseBNO055(){
@@ -24,6 +26,12 @@ void BNO055_Interface::InitialiseBNO055(){
 	bno055.delay_msec = &BNO055_delay_msek;
 
 	bno055.dev_addr = 0; //BNO055_ADDRESS; Since we are using SPI to communicate instead of i2c
+
+    //clears all the data in the registers, this is important if the system is restarting 
+    //after a soft reset as it forces a hard reset
+    u8 resetBit = 0x01;
+    bno055_set_sys_rst(resetBit);
+    usleep(635);
  
     int32_t result = BNO055_ERROR;
     result = bno055_init(&bno055);
@@ -36,20 +44,14 @@ void BNO055_Interface::InitialiseBNO055(){
         bno055_set_power_mode(BNO055_POWER_MODE_NORMAL);
         cout<< ".";
         Calibrate();
-        cout<< ".";
-        CalibrationCheck();
         cout<< " Done \n";
     }
 }
-
 
 void BNO055_Interface::Reset(){
     #if DEBUG
         printf("Resetting BNO055\n");
     #endif
-    u8 resetBit = 0x01;
-    bno055_set_sys_rst(resetBit);
-    sleep(1);
     try {
         InitialiseBNO055();
     } catch (const char* msg){
@@ -139,9 +141,6 @@ void BNO055_Interface::Calibrate(){
     } else {
         printf("\nERR: MANUAL RECALIBRATION IS NECESSARY\n");
     }
-
-    //result += bno055_set_power_mode(BNO055_POWER_MODE_SUSPEND);
-    //Error handling here
 }
 
 void BNO055_Interface::ManualCalibration(){
@@ -231,31 +230,6 @@ void BNO055_Interface::ManualCalibration(){
     }
 }
 
-void BNO055_Interface::CalibrationCheck(){
-    //if standard offsets have not been loaded then load them
-    if(offsetsLoaded != true){
-        try{
-            Calibrate();
-        } catch (const char* msg){
-            cout << msg << endl;
-        } 
-    }
-        
-    bool checkCalib = isCalibratedSample(10);
-
-    if(checkCalib){
-        isCalibrated = true;
-    } else {
-        isCalibrated = false;
-
-        try{
-            Calibrate();
-        } catch (const char* msg){
-            cout << msg << endl;
-        }
-    } 
-}
-
 bool BNO055_Interface::isCalibratedSample(int sampleLength){
     //not actually check if the device is calibrated
     int result = BNO055_ERROR;
@@ -275,8 +249,10 @@ bool BNO055_Interface::isCalibratedSample(int sampleLength){
     for(int i = 0; i < sampleLength; i++){
         if((accel_calibration == BNO055_FULLY_CALIBRATED /*&& mag_calibration == BNO055_FULLY_CALIBRATED*/) &&
                 (gyro_calibration == BNO055_FULLY_CALIBRATED)){
-                    sampleAverage += 1;
-        }
+            sampleAverage += 1.00;
+        } 
+        result += bno055_get_accel_calib_stat(&accel_calibration);
+        result += bno055_get_gyro_calib_stat(&gyro_calibration);
         usleep(100);
     }
 
@@ -333,11 +309,9 @@ void BNO055_Interface::updateData(){
     }
 }
 
-s8 BNO055_SPI_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
-{
+s8 BNO055_SPI_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
     //get the file descriptor here ???
     spi.openfd();
-    int file_descriptor = spi.getFileDescriptor();
 
     #if DEBUG
         printf("\n\nSPI READ\n");
@@ -351,11 +325,6 @@ s8 BNO055_SPI_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
         printf("cnt %d \n", cnt);
     #endif
 
-    //clear output buffer
-    tcflush(file_descriptor, TCOFLUSH);
-    //flush input buffer
-    tcflush(file_descriptor, TCIFLUSH);
-
     u8 result = BNO055_ERROR;
     u8 array[4];
 
@@ -365,35 +334,15 @@ s8 BNO055_SPI_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
     array[2] = reg_addr & 0xFF;
     array[3] = cnt & 0xFF;
 
-    #if DEBUG
-        printf("Writing the data \n");
-    #endif
     //write get input command
-    result = write(file_descriptor, array, 4);
+    spi.serialWrite(array, 4);
 
     //wait until data has been sent
    // tcdrain(file_descriptor);
-    #if DEBUG
-        printf("WAITING FOR RESPONSE\n");
-    #endif
 
-    //get response
     uint response_length = cnt + 2;
     u8 resp_array[response_length];    
-    uint bytes = 0;
-    uint loop_break = SERIAL_LOOP_BREAK;
-    while(bytes < response_length && loop_break > 0){
-        ioctl(file_descriptor, FIONREAD, &bytes);
-        BNO055_delay_msek(10);
-        #if DEBUG
-            printf(".");
-        #endif
-        loop_break--;
-    }
-    #if DEBUG
-        printf("\nREADING DATA ");
-    #endif
-    result = read(file_descriptor, resp_array, response_length);
+    spi.serialRead(resp_array, response_length);
 
     if(resp_array[0] != 0xBB){ 
         #if DEBUG
@@ -405,9 +354,6 @@ s8 BNO055_SPI_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
     for(uint i = 0; i < cnt; i++){
         reg_data[i] = resp_array[i + 2];
     }
-    #if DEBUG
-        printf("... DONE\n");
-    #endif
 
     //close the file descriptor here ???
     spi.closefd();
@@ -416,11 +362,9 @@ s8 BNO055_SPI_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
     return result;
 }
 
-s8 BNO055_SPI_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
-{
+s8 BNO055_SPI_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
     //open the file descriptor ???
     spi.openfd();
-    int file_descriptor = spi.getFileDescriptor();
 
     #if DEBUG
         printf("WRITING\n");
@@ -433,12 +377,8 @@ s8 BNO055_SPI_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
         printf("\n");
         printf("cnt %d \n", cnt);  
     #endif
-
-    //clear output buffer
-    tcflush(file_descriptor, TCOFLUSH);
-    //flush input buffer
-    tcflush(file_descriptor, TCIFLUSH);
-    s32 result = BNO055_INIT_VALUE;
+    
+    u8 result = BNO055_INIT_VALUE;
 
     //write to file
     uint array_length = 4 + cnt;
@@ -453,43 +393,14 @@ s8 BNO055_SPI_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
         array[4 + i] = reg_data[i];
     }
 
-    #if DEBUG
-        printf("Array Values => ");
-        for(uint i = 0; i < array_length; i++){
-            printf("0x%02x ", array[i]);
-        }
-        printf("\n");
-    #endif
-
     //write array to output buffer
-    result = write(file_descriptor, array, array_length);
-
-    //hold system until data has been transmitted
-    //tcdrain(file_descriptor);
+    spi.serialWrite(array, array_length);
 
     //wait for response
     uint response_length = 2;
-    //return error if response is invalid
-    uint bytes = 0;
-    uint loop_break = SERIAL_LOOP_BREAK;
-    while(bytes < response_length && loop_break > 0){
-        ioctl(file_descriptor, FIONREAD, &bytes);
-        BNO055_delay_msek(10);
-        #if DEBUG
-            printf(".");
-        #endif
-        loop_break--;
-    }
 
     u8 resp_array[response_length];
-    result = read(file_descriptor, resp_array, response_length);
-
-    #if DEBUG
-        printf("Bytes %d\n", bytes);
-        for(uint i = 0; i < bytes; i++)
-                printf("0x%02x ", resp_array[i]);
-        printf("\n0 Value %d \n", resp_array[0]);
-    #endif
+    spi.serialRead(resp_array, response_length);
 
     if(resp_array[0] != 0xEE && resp_array[1] != 0x01){
         BNO055_delay_msek(5000);
@@ -502,9 +413,34 @@ s8 BNO055_SPI_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 	return result;  
 }
 
-void BNO055_delay_msek(u32 msek)
-{
+void BNO055_delay_msek(u32 msek){
     usleep(SERIAL_WAIT * msek);
 }
 
  
+/*
+void BNO055_Interface::CalibrationCheck(){
+    //if standard offsets have not been loaded then load them
+    if(offsetsLoaded != true){
+        try{
+            Calibrate();
+        } catch (const char* msg){
+            cout << msg << endl;
+        } 
+    }
+        
+    bool checkCalib = isCalibratedSample(10);
+
+    if(checkCalib){
+        isCalibrated = true;
+    } else {
+        isCalibrated = false;
+
+        try{
+            Calibrate();
+        } catch (const char* msg){
+            cout << msg << endl;
+        }
+    } 
+}
+*/

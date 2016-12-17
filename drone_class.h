@@ -17,7 +17,7 @@ class Drone {
                 bool isLanded();
                 void setLanded(bool);
                 int getAvgSpeed();
-                void updateMotors(double, double, double, int);
+                void updateMotors(double, double, double, double);
         private:
                 PCA9685 pwm;
                 int avg_speed;

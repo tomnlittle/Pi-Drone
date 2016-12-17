@@ -42,28 +42,26 @@ int Drone::getAvgSpeed(){
     return avg_speed;
 }
 
-void Drone::updateMotors(double roll, double pitch, double yaw, int throttle){
-    Front_Left.setSpeed(0);
-    Front_Right.setSpeed(0);
-    Back_Left.setSpeed(0);
-    Back_Right.setSpeed(0);
+void Drone::updateMotors(double roll, double pitch, double yaw, double throttle){
+    Front_Left.setSpeed(throttle - pitch + roll - (YAW_DIRECTION * yaw));
+    Front_Right.setSpeed(throttle - pitch - roll + (YAW_DIRECTION * yaw));
+    Back_Left.setSpeed(throttle + pitch + roll + (YAW_DIRECTION * yaw));
+    Back_Right.setSpeed(throttle + pitch - roll - (YAW_DIRECTION * yaw));
+
+    printf("Front Left at %lf \n", throttle - pitch + roll - (YAW_DIRECTION * yaw));
+    printf("Front Right at %lf \n", throttle - pitch - roll + (YAW_DIRECTION * yaw));
+    printf("Back Left at %lf \n", throttle + pitch + roll + (YAW_DIRECTION * yaw));
+    printf("Back Right at %lf \n\n",throttle + pitch - roll - (YAW_DIRECTION * yaw));
+    printf ("____________________________________ \n");
 }
+
+
+
+
+
 
 
 /*
-
-void applyMotorCommand() {
-  motorCommand[FRONT_LEFT]  = throttle - motorAxisCommandPitch + motorAxisCommandRoll - (YAW_DIRECTION * motorAxisCommandYaw);
-  motorCommand[FRONT_RIGHT] = throttle - motorAxisCommandPitch - motorAxisCommandRoll + (YAW_DIRECTION * motorAxisCommandYaw);
-  motorCommand[REAR_LEFT]   = throttle + motorAxisCommandPitch + motorAxisCommandRoll + (YAW_DIRECTION * motorAxisCommandYaw);
-  motorCommand[REAR_RIGHT]  = throttle + motorAxisCommandPitch - motorAxisCommandRoll - (YAW_DIRECTION * motorAxisCommandYaw);
-}
-
-
-
-
-
-
 	printf ("Servo Initialising\n");
 	
 	printf("...");

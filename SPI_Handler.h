@@ -28,11 +28,14 @@ class SPI_Handler {
     public:
         SPI_Handler();
         ~SPI_Handler();
-        int getFileDescriptor();
         void closefd();
         void openfd();
+        void serialRead(uint8_t *data, int size);
+        void serialWrite(uint8_t *data, int size);
     private:
+        void serialFlush();
         int serial_file_descriptor; //used to address and initialise the serial port
         string serial_port;
         struct termios options; // struct for spi 
+        bool isOpen; //whether the serial port has been opened already and that the address is valid
 };

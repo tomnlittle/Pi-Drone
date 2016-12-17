@@ -13,6 +13,7 @@
 #define I2C_ADAPTER 			        1
 #define PCA9685_ADDRESS					0x40
 #define PCA9685_FREQUENCY   			61
+#define YAW_DIRECTION                   -1
 
 #define MOTOR_0_PIN  					0		
 #define MOTOR_1_PIN						4

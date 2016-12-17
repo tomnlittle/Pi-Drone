@@ -20,10 +20,9 @@ extern "C" {
 
 #define BNO055_FULLY_CALIBRATED                 3
 #define CALIBRATION_FILENAME                    "./BNO055_CALIBRATION_DATA.txt"
-#define I2C0                                    5
 #define	BNO055_I2C_BUS_WRITE_ARRAY_INDEX	    ((u8)1)
 #define CALIB_SAMPLE_THRESHOLD                  0.4
-#define DEFAULT_OPERATION_MODE                 BNO055_OPERATION_MODE_NDOF
+#define DEFAULT_OPERATION_MODE                  BNO055_OPERATION_MODE_IMUPLUS//BNO055_OPERATION_MODE_NDOF
 
  /*----------------------------------------------------------------------------*
  *  struct bno055_t parameters can be accessed by using BNO055
@@ -46,26 +45,18 @@ class BNO055_Interface {
         BNO055_Interface();
         ~BNO055_Interface();
 
-        //void BNO055_delay_msek(u32 msek);
-        //s8 BNO055_SPI_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
-        //s8 BNO055_SPI_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
-
         void InitialiseBNO055();
         void Reset();
 
         //writes the euler/quaterion data to the array
         void getEulerData(double *data_array);
-       
-        
         void Calibrate();
         void ManualCalibration();
-        
-
         bool getCalibrated();
 
     private:
         void updateData();
-        void CalibrationCheck();
+        //void CalibrationCheck();
         bool isCalibratedSample(int sampleLength);
 
         bool isCalibrated;
