@@ -282,6 +282,11 @@ void BNO055_Interface::getEulerData(double *data_array){
     data_array[0] = atan2(2.0*(quaternion_X*quaternion_Y+quaternion_Z*quaternion_W),(sqx-sqy-sqz+sqw));//X - Yaw
     data_array[1] = asin(-2.0*(quaternion_X*quaternion_Z-quaternion_Y*quaternion_W)/(sqx+sqy+sqz+sqw)); // Y - Pitch 
     data_array[2] = atan2(2.0*(quaternion_Y*quaternion_Z+quaternion_X*quaternion_W),(-sqx-sqy+sqz+sqw)); // Z - Roll
+
+    if(data_array[2] < 0){
+        double diff =  3.141593 + data_array[2];
+        data_array[2] = diff + 3.141593 ;
+    }
 }
 
 void BNO055_Interface::updateData(){

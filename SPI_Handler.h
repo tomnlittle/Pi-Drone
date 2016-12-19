@@ -19,7 +19,7 @@
 #define SERIAL_PARITY                           0 ///IGNPAR
 #define	SERIAL_WRITE_READ_LENGTH                5
 #define SERIAL_MAX_BYTES                        128
-#define SERIAL_LOOP_BREAK                       80 //How many times to wait for data to be received
+#define SERIAL_LOOP_BREAK                       50 //How many times to wait for data to be received
 
 //object of this is so that multiple devices dont write to the Serial Port at the same time and
 // that all devices use the same interface and do not interfere with each other
