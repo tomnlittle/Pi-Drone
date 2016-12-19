@@ -56,13 +56,13 @@ int main(void) {
 } 
 
 void droneThread(double *throttle, Drone d){
-	while(booted){
+	//while(booted){
 		d.updateMotors(roll_value, pitch_value, 0.0, *throttle);
 		//printf("\nDroneTHREAD \n");
 		//printf("D Roll : %lf\n", roll.getPID());
 		//printf("D Pitch : %lf \n\n", pitch.getPID());
 		//usleep(MAIN_LOOP_WAIT+MAIN_LOOP_WAIT);
-	}
+	//}
 }
 
 void BNO055Thread(PID roll, PID pitch, BNO055_Interface b){
