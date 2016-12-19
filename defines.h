@@ -26,4 +26,6 @@
 
 #define EULER_DATA_ARRAY                3
 
+#define MAIN_LOOP_WAIT                  5000
+
 using namespace std;

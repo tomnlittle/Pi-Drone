@@ -21,6 +21,7 @@ BNO055_Interface::~BNO055_Interface(){
 
 
 void BNO055_Interface::InitialiseBNO055(){
+    cout<< "\nInitialising ";
     bno055.bus_write = &BNO055_SPI_bus_write; //function pointers for writing to SPI
 	bno055.bus_read = &BNO055_SPI_bus_read;
 	bno055.delay_msec = &BNO055_delay_msek;
@@ -39,7 +40,6 @@ void BNO055_Interface::InitialiseBNO055(){
     if(result != 0){
         throw "\nERR: Cannot Initialise BNO055...\n";
     } else {
-        cout<< "\nInitialising ";
         cout<< ".";
         bno055_set_power_mode(BNO055_POWER_MODE_NORMAL);
         cout<< ".";
@@ -49,9 +49,7 @@ void BNO055_Interface::InitialiseBNO055(){
 }
 
 void BNO055_Interface::Reset(){
-    #if DEBUG
-        printf("Resetting BNO055\n");
-    #endif
+    printf("Resetting BNO055\n");
     try {
         InitialiseBNO055();
     } catch (const char* msg){
