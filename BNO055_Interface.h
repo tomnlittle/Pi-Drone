@@ -22,7 +22,7 @@ extern "C" {
 #define CALIBRATION_FILENAME                    "./BNO055_CALIBRATION_DATA.txt"
 #define	BNO055_I2C_BUS_WRITE_ARRAY_INDEX	    ((u8)1)
 #define CALIB_SAMPLE_THRESHOLD                  0.4
-#define DEFAULT_OPERATION_MODE                  BNO055_OPERATION_MODE_IMUPLUS//BNO055_OPERATION_MODE_NDOF
+#define DEFAULT_OPERATION_MODE                  BNO055_OPERATION_MODE_NDOF//BNO055_OPERATION_MODE_IMUPLUS
 
  /*----------------------------------------------------------------------------*
  *  struct bno055_t parameters can be accessed by using BNO055

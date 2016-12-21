@@ -47,12 +47,12 @@ void Drone::updateMotors(double roll, double pitch, double yaw, double throttle)
     Front_Right.setSpeed(throttle - pitch - roll + (YAW_DIRECTION * yaw));
     Back_Left.setSpeed(throttle + pitch + roll + (YAW_DIRECTION * yaw));
     Back_Right.setSpeed(throttle + pitch - roll - (YAW_DIRECTION * yaw));
-
+/*
     printf("Front Left at %lf \n", throttle - pitch + roll - (YAW_DIRECTION * yaw));
     printf("Front Right at %lf \n", throttle - pitch - roll + (YAW_DIRECTION * yaw));
     printf("Back Left at %lf \n", throttle + pitch + roll + (YAW_DIRECTION * yaw));
     printf("Back Right at %lf \n\n",throttle + pitch - roll - (YAW_DIRECTION * yaw));
-    printf ("____________________________________ \n");
+    printf ("____________________________________ \n"); */
 }
 
 

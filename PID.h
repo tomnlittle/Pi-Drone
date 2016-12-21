@@ -2,8 +2,8 @@
 
 #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
 
-#define PID_PROPORTIONAL                1.0
-#define PID_INTEGRAL                    0.0
+#define PID_PROPORTIONAL                2.0
+#define PID_INTEGRAL                    1.0
 #define PID_DERIVATIVE                  0.0
 #define PID_WINDUPGUARD                 0.375
 

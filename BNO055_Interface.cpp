@@ -223,9 +223,9 @@ void BNO055_Interface::ManualCalibration(){
     result += bno055_set_operation_mode(DEFAULT_OPERATION_MODE);  
     //result += bno055_set_power_mode(BNO055_POWER_MODE_SUSPEND);
 
-    if(result != 0){
+    if(result == BNO055_ERROR){
         throw "ERROR: Failed to Manually Calibrate";
-    }
+    } 
 }
 
 bool BNO055_Interface::isCalibratedSample(int sampleLength){
