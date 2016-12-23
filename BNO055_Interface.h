@@ -22,7 +22,7 @@ extern "C" {
 #define CALIBRATION_FILENAME                    "./BNO055_CALIBRATION_DATA.txt"
 #define	BNO055_I2C_BUS_WRITE_ARRAY_INDEX	    ((u8)1)
 #define CALIB_SAMPLE_THRESHOLD                  0.4
-#define DEFAULT_OPERATION_MODE                  BNO055_OPERATION_MODE_NDOF//BNO055_OPERATION_MODE_IMUPLUS
+#define DEFAULT_OPERATION_MODE                  BNO055_OPERATION_MODE_NDOF//BNO055_OPERATION_MODE_IMUPLUS//BNO055_OPERATION_MODE_NDOF
 
  /*----------------------------------------------------------------------------*
  *  struct bno055_t parameters can be accessed by using BNO055
@@ -49,15 +49,19 @@ class BNO055_Interface {
         void Reset();
 
         //writes the euler/quaterion data to the array
-        void getEulerData(double *data_array);
         void Calibrate();
         void ManualCalibration();
         bool getCalibrated();
+
+        double getYaw();
+        double getRoll();
+        double getPitch();
 
     private:
         void updateData();
         //void CalibrationCheck();
         bool isCalibratedSample(int sampleLength);
+        void writeEulerData();
 
         bool isCalibrated;
         /*
@@ -67,9 +71,12 @@ class BNO055_Interface {
         */
         bool offsetsLoaded; 
 
-        //stored as raw values 
-        s16 quaternion_W;
-        s16 quaternion_Y;
-        s16 quaternion_X;
-        s16 quaternion_Z;
+        double yaw;
+        double roll;
+        double pitch;
+
+        bool threadActive;
+        std::thread updateThread;  //the thread for updating the data 
+
+        int numUpdates;
 };

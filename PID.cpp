@@ -2,7 +2,6 @@
 
 PID::PID(){
     current_time = clock();
-
     windupGuard = PID_WINDUPGUARD; //magic number
 	P = PID_PROPORTIONAL;
 	I = PID_INTEGRAL;
@@ -44,11 +43,11 @@ void PID::updatePID(double target, double current){
     previousPIDTime = current_time;
 
     current_time = clock();
-
+/*
     printf("diffTerm     : %lf\n", diffTerm);
     printf("Integral     : %lf\n", (I * integratedError));
     printf("Proportional : %lf\n", (P * error));
-
+*/
 
     PIDValue = (P * error) + (I * integratedError) + diffTerm;
 }

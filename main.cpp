@@ -4,51 +4,26 @@
 #include "drone_class.h"
 #include "BNO055_Interface.h"
 #include "PID.h"
-#include <thread>
+
+#include <chrono>
+
 
 static bool booted = false;
-double roll_value = 0.0; //these are used for talking between threads until i get that figured
-double pitch_value = 0.0;
-double yaw_value = 0.0;
 
 double throttle = 0.00; 
 //for range finding/ ESC calibration
 void setThrottleRange(void);
 
-void droneThread(Drone); //PID pitch, PID roll, Drone d);
-
-void BNO055Thread(PID, PID, PID, BNO055_Interface);
+void droneThread(); 
 
 double checkThreshold(double, double);
 
 int main(void) {
 
-	Drone d;
-
-	//InitialiseBNO055
-	BNO055_Interface bINT;
-
-	try {
-        bINT.InitialiseBNO055();
-    } catch (const char* msg){
-        cout << msg << endl;
-        sleep(1);
-        bINT.Reset();
-    }
-
-	//bINT.ManualCalibration();
-
-	PID pitch;
-	PID roll;	
-	PID yaw;
-
-	d.setLanded(false);
+	printf("Starting... \n");
 
 	booted = true;
-
-	std::thread bT(BNO055Thread, roll, pitch, yaw, bINT);
-	usleep(5000); //wait for first readings to come through, this minimizes wonky errors at bootup
-	std::thread dT(droneThread, d);
+	std::thread dT(droneThread);
 
 	char hold_value = ' ';
 
@@ -66,68 +41,38 @@ int main(void) {
 			break;
 		}
 		cin >> hold_value;
-	}
-	
+	} 
+
 	dT.join();
-	bT.join();
 
 	return 0;
 } 
 
-void droneThread(Drone d){
+void droneThread(){
+	Drone d;
+	BNO055_Interface bINT;
+
+	try {
+        bINT.InitialiseBNO055();
+    } catch (const char* msg){
+        cout << msg << endl;
+        sleep(1);
+        bINT.Reset();
+    }
+	PID pitch;
+	PID roll;	
+	PID yaw;
+	double roll_value = 0.0; //these are used for talking between threads until i get that figured
+	double pitch_value = 0.0;
+	double yaw_value = 0.0;
+	d.setLanded(false);	
 	while(booted){
-		d.updateMotors(roll_value, pitch_value, 0.0, throttle);
-		//printf("\nDroneTHREAD \n");
-		//printf("D Roll : %lf\n", roll.getPID());
-		//printf("D Pitch : %lf \n\n", pitch.getPID());
-		usleep(MAIN_LOOP_WAIT+MAIN_LOOP_WAIT);
+		roll.updatePID(3.141593, bINT.getRoll());
+		pitch.updatePID(-0.000000, bINT.getPitch());
+		yaw.updatePID(0.0, bINT.getPitch());
+		d.updateMotors(roll_value, pitch_value, yaw_value, throttle);
 	}
 }
-
-void BNO055Thread(PID roll, PID pitch, PID yaw, BNO055_Interface b){
-	double euler_array[EULER_DATA_ARRAY];
-	for(int i = 0; i < EULER_DATA_ARRAY; i++)
-		euler_array[i] = 0.0;
-
-	while(booted){
-		try {
-			b.getEulerData(euler_array);
-		} catch (const char* msg){
-			cout << msg << endl;
-			usleep(MAIN_LOOP_WAIT);
-			continue;
-		}
-		
-		roll.updatePID(3.141593, euler_array[2]);
-		pitch.updatePID(-0.000000, euler_array[1]);
-		yaw.updatePID(0.0, euler_array[0]);
-
-		roll_value = checkThreshold(roll_value, roll.getPID());
-		pitch_value = checkThreshold(pitch_value, pitch.getPID());
-		yaw_value = 0.0;
-
-		printf("Front Left at %lf \n", throttle - pitch_value + roll_value - (YAW_DIRECTION * yaw_value));
-		printf("Front Right at %lf \n", throttle - pitch_value - roll_value + (YAW_DIRECTION * yaw_value));
-		printf("Back Left at %lf \n", throttle + pitch_value + roll_value + (YAW_DIRECTION * yaw_value));
-		printf("Back Right at %lf \n\n",throttle + pitch_value - roll_value - (YAW_DIRECTION * yaw_value));
-		printf ("____________________________________ \n");
-
-		//printf("PID Roll : %lf\n", roll.getPID());
-		//printf("PID Pitch : %lf \n\n", pitch.getPID());		
-
-		//usleep(MAIN_LOOP_WAIT); 
-	}
-}
-
-double checkThreshold(double old_value, double new_value){
-	//if((old_value + new_value)/2 > (old_value + 5.00)){
-	if((old_value + 5) < new_value){
-		return old_value;
-	}
-
-	return new_value;
-}
-
 
 //Only used for calibration procedures, completely works around class system
 void setThrottleRange(void){

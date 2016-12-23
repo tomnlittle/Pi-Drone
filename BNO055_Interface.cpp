@@ -4,19 +4,30 @@
 
 struct bno055_t bno055;
 SPI_Handler spi;
+struct bno055_quaternion_t quaternion_data; //struct for data 
+struct bno055_quaternion_t quaternion_data_old; //struct for data 
 
 BNO055_Interface::BNO055_Interface(){
     isCalibrated = false;
     offsetsLoaded = false;
 
-    quaternion_W = BNO055_INIT_VALUE;
-	quaternion_X = BNO055_INIT_VALUE;
-	quaternion_Y = BNO055_INIT_VALUE;
-    quaternion_Z = BNO055_INIT_VALUE;
+    quaternion_data.w = BNO055_INIT_VALUE;
+    quaternion_data.x = BNO055_INIT_VALUE;
+    quaternion_data.y = BNO055_INIT_VALUE;
+    quaternion_data.z = BNO055_INIT_VALUE;
+
+    yaw = 0.0;
+    pitch = 0.0;
+    roll = 0.0;
+
+    numUpdates = 0;
 }
 
 BNO055_Interface::~BNO055_Interface(){
+    threadActive = false;
     spi.closefd();
+    if(updateThread.joinable()) updateThread.join();
+    cout << "BNO055 Destructor : Number of Updates " << numUpdates << "\n";
 }
 
 
@@ -44,13 +55,19 @@ void BNO055_Interface::InitialiseBNO055(){
         bno055_set_power_mode(BNO055_POWER_MODE_NORMAL);
         cout<< ".";
         Calibrate();
-        cout<< " Done \n";
+        cout<< " Done ... Starting Thread BNO055 Thread\n";
+
+        bno055_set_operation_mode(DEFAULT_OPERATION_MODE);
+        updateThread = std::thread(&BNO055_Interface::writeEulerData, this);
+        threadActive = true;
     }
 }
 
 void BNO055_Interface::Reset(){
     printf("Resetting BNO055\n");
     try {
+        if(updateThread.joinable()) updateThread.join();
+        threadActive = false;
         InitialiseBNO055();
     } catch (const char* msg){
         sleep(1);
@@ -266,50 +283,76 @@ bool BNO055_Interface::getCalibrated(){
     return isCalibrated;
 }
 
-void BNO055_Interface::getEulerData(double *data_array){
-    try {
-        updateData();
-    } catch (const char* msg){
-        cout << msg << endl;
-        return;
-    }
-    
-    double sqw = quaternion_W*quaternion_W;
-    double sqx = quaternion_X*quaternion_X;
-    double sqy = quaternion_Y*quaternion_Y;
-    double sqz = quaternion_Z*quaternion_Z;
+void BNO055_Interface::writeEulerData(){
+    while(threadActive){
+        try {
+            updateData();
+        } catch (const char* msg){
+            cout << msg << endl;
+            continue;
+        }
 
-    data_array[0] = atan2(2.0*(quaternion_X*quaternion_Y+quaternion_Z*quaternion_W),(sqx-sqy-sqz+sqw));//X - Yaw
-    data_array[1] = asin(-2.0*(quaternion_X*quaternion_Z-quaternion_Y*quaternion_W)/(sqx+sqy+sqz+sqw)); // Y - Pitch 
-    data_array[2] = atan2(2.0*(quaternion_Y*quaternion_Z+quaternion_X*quaternion_W),(-sqx-sqy+sqz+sqw)); // Z - Roll
+        s16 quaternion_W = quaternion_data.w/BNO055_RADIAN_CONSTANT;
+        s16 quaternion_X = quaternion_data.x/BNO055_RADIAN_CONSTANT;
+        s16 quaternion_Y = quaternion_data.y/BNO055_RADIAN_CONSTANT;
+        s16 quaternion_Z = quaternion_data.z/BNO055_RADIAN_CONSTANT;
+        
+        double sqw = quaternion_W*quaternion_W;
+        double sqx = quaternion_X*quaternion_X;
+        double sqy = quaternion_Y*quaternion_Y;
+        double sqz = quaternion_Z*quaternion_Z;
 
-    if(data_array[2] < 0){
-        double diff =  3.141593 + data_array[2];
-        data_array[2] = diff + 3.141593 ;
+        yaw = atan2(2.0*(quaternion_X*quaternion_Y+quaternion_Z*quaternion_W),(sqx-sqy-sqz+sqw));//X - Yaw
+        pitch = asin(-2.0*(quaternion_X*quaternion_Z-quaternion_Y*quaternion_W)/(sqx+sqy+sqz+sqw)); // Y - Pitch 
+        roll = atan2(2.0*(quaternion_Y*quaternion_Z+quaternion_X*quaternion_W),(-sqx-sqy+sqz+sqw)); // Z - Roll
+
+        if(roll < 0){
+            double diff =  3.141593 + roll;
+            roll = diff + 3.141593;
+        }
     }
+}
+
+int checkThreshold(s16 old_value, s16 new_value){
+	//if((old_value + new_value)/2 > (old_value + 5.00)){
+	if((old_value + 5) < new_value){
+		return BNO055_ERROR;
+	}
+	return 0;
 }
 
 void BNO055_Interface::updateData(){
     int result = BNO055_ERROR;
+    // result = bno055_set_operation_mode(DEFAULT_OPERATION_MODE);
 
-    /* set the power mode as NORMAL*/
-    //result = bno055_set_power_mode(BNO055_POWER_MODE_NORMAL);
-    result = bno055_set_operation_mode(DEFAULT_OPERATION_MODE);
+    quaternion_data_old = quaternion_data;
+    result = bno055_read_quaternion_wxyz(&quaternion_data);
 
-    result += bno055_read_quaternion_w(&quaternion_W);
-	result += bno055_read_quaternion_x(&quaternion_X);
-	result += bno055_read_quaternion_y(&quaternion_Y);
-	result += bno055_read_quaternion_z(&quaternion_Z);
+    //check data integrity
+    result += checkThreshold(quaternion_data_old.w, quaternion_data.w);
+    result += checkThreshold(quaternion_data_old.x, quaternion_data.x);
+    result += checkThreshold(quaternion_data_old.y, quaternion_data.y);
+    result += checkThreshold(quaternion_data_old.z, quaternion_data.z);
 
-    quaternion_W = quaternion_W/BNO055_RADIAN_CONSTANT;
-    quaternion_X = quaternion_X/BNO055_RADIAN_CONSTANT;
-    quaternion_Y = quaternion_Y/BNO055_RADIAN_CONSTANT;
-    quaternion_Z = quaternion_Z/BNO055_RADIAN_CONSTANT;
-    
     //Finished with read 
     if(result != 0){
-        throw "ERROR: Failed to Update Data";
+        throw "ERROR: Failed to Retrieve Data";
+    } else {
+        printf("update successful\n");
+        numUpdates++;
     }
+}
+
+double BNO055_Interface::getYaw(){
+    return yaw;
+}
+
+double BNO055_Interface::getRoll(){
+    return roll;
+}
+
+double BNO055_Interface::getPitch(){
+    return pitch;
 }
 
 s8 BNO055_SPI_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
@@ -419,31 +462,3 @@ s8 BNO055_SPI_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt){
 void BNO055_delay_msek(u32 msek){
     usleep(SERIAL_WAIT * msek);
 }
-
- 
-/*
-void BNO055_Interface::CalibrationCheck(){
-    //if standard offsets have not been loaded then load them
-    if(offsetsLoaded != true){
-        try{
-            Calibrate();
-        } catch (const char* msg){
-            cout << msg << endl;
-        } 
-    }
-        
-    bool checkCalib = isCalibratedSample(10);
-
-    if(checkCalib){
-        isCalibrated = true;
-    } else {
-        isCalibrated = false;
-
-        try{
-            Calibrate();
-        } catch (const char* msg){
-            cout << msg << endl;
-        }
-    } 
-}
-*/
