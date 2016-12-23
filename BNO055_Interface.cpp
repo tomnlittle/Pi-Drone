@@ -338,7 +338,7 @@ void BNO055_Interface::updateData(){
     if(result != 0){
         throw "ERROR: Failed to Retrieve Data";
     } else {
-        printf("update successful\n");
+        //printf("update successful\n");
         numUpdates++;
     }
 }

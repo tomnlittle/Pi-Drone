@@ -59,18 +59,19 @@ void droneThread(){
         sleep(1);
         bINT.Reset();
     }
+
 	PID pitch;
 	PID roll;	
 	PID yaw;
-	double roll_value = 0.0; //these are used for talking between threads until i get that figured
-	double pitch_value = 0.0;
-	double yaw_value = 0.0;
+	
 	d.setLanded(false);	
 	while(booted){
+		//BNO055_Caller(roll, pitch, yaw, bINT);
 		roll.updatePID(3.141593, bINT.getRoll());
 		pitch.updatePID(-0.000000, bINT.getPitch());
 		yaw.updatePID(0.0, bINT.getPitch());
-		d.updateMotors(roll_value, pitch_value, yaw_value, throttle);
+
+		d.updateMotors(roll.getPID(), pitch.getPID(), yaw.getPID(), throttle);
 	}
 }
 
