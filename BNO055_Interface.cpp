@@ -30,7 +30,6 @@ BNO055_Interface::~BNO055_Interface(){
     cout << "BNO055 Destructor : Number of Updates " << numUpdates << "\n";
 }
 
-
 void BNO055_Interface::InitialiseBNO055(){
     cout<< "\nInitialising ";
     bno055.bus_write = &BNO055_SPI_bus_write; //function pointers for writing to SPI
@@ -58,6 +57,7 @@ void BNO055_Interface::InitialiseBNO055(){
         cout<< " Done ... Starting Thread BNO055 Thread\n";
 
         bno055_set_operation_mode(DEFAULT_OPERATION_MODE);
+
         updateThread = std::thread(&BNO055_Interface::writeEulerData, this);
         threadActive = true;
     }
@@ -286,16 +286,18 @@ bool BNO055_Interface::getCalibrated(){
 void BNO055_Interface::writeEulerData(){
     while(threadActive){
         try {
+            printf(".");
             updateData();
         } catch (const char* msg){
             cout << msg << endl;
             continue;
         }
 
-        s16 quaternion_W = quaternion_data.w/BNO055_RADIAN_CONSTANT;
-        s16 quaternion_X = quaternion_data.x/BNO055_RADIAN_CONSTANT;
-        s16 quaternion_Y = quaternion_data.y/BNO055_RADIAN_CONSTANT;
-        s16 quaternion_Z = quaternion_data.z/BNO055_RADIAN_CONSTANT;
+        printf("doing work...");
+        double quaternion_W = quaternion_data.w/BNO055_RADIAN_CONSTANT;
+        double quaternion_X = quaternion_data.x/BNO055_RADIAN_CONSTANT;
+        double quaternion_Y = quaternion_data.y/BNO055_RADIAN_CONSTANT;
+        double quaternion_Z = quaternion_data.z/BNO055_RADIAN_CONSTANT;
         
         double sqw = quaternion_W*quaternion_W;
         double sqx = quaternion_X*quaternion_X;
@@ -310,13 +312,17 @@ void BNO055_Interface::writeEulerData(){
             double diff =  3.141593 + roll;
             roll = diff + 3.141593;
         }
+
+        printf("done\n");
+
+        //printf("yaw : %lf  -  roll : %lf  -  pitch : %lf\n", yaw, roll, pitch);
     }
 }
 
 int checkThreshold(s16 old_value, s16 new_value){
 	//if((old_value + new_value)/2 > (old_value + 5.00)){
 	if((old_value + 5) < new_value){
-		return BNO055_ERROR;
+		return 0;//BNO055_ERROR; 
 	}
 	return 0;
 }
@@ -325,6 +331,7 @@ void BNO055_Interface::updateData(){
     int result = BNO055_ERROR;
     // result = bno055_set_operation_mode(DEFAULT_OPERATION_MODE);
 
+    printf(".");
     quaternion_data_old = quaternion_data;
     result = bno055_read_quaternion_wxyz(&quaternion_data);
 
@@ -333,13 +340,17 @@ void BNO055_Interface::updateData(){
     result += checkThreshold(quaternion_data_old.x, quaternion_data.x);
     result += checkThreshold(quaternion_data_old.y, quaternion_data.y);
     result += checkThreshold(quaternion_data_old.z, quaternion_data.z);
-
+    printf(".");
+    
     //Finished with read 
     if(result != 0){
-        throw "ERROR: Failed to Retrieve Data";
+        throw "ERROR: Failed to Retrieve Data\n";
     } else {
         //printf("update successful\n");
         numUpdates++;
+        printf("\nupdates %d => ", numUpdates);
+        //printf("W : %d     X : %d     Y : %d     Z : %d \n", quaternion_data.w, quaternion_data.x, 
+         //                                                               quaternion_data.y, quaternion_data.z);
     }
 }
 

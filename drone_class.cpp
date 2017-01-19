@@ -52,7 +52,7 @@ void Drone::updateMotors(double roll, double pitch, double yaw, double throttle)
     printf("Front Right at %lf \n", throttle - pitch - roll + (YAW_DIRECTION * yaw));
     printf("Back Left at %lf \n", throttle + pitch + roll + (YAW_DIRECTION * yaw));
     printf("Back Right at %lf \n\n",throttle + pitch - roll - (YAW_DIRECTION * yaw));
-    printf ("____________________________________ \n"); */
+    printf ("____________________________________ \n");  */
 }
 
 

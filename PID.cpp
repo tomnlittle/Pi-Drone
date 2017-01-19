@@ -2,14 +2,17 @@
 
 PID::PID(){
     current_time = clock();
-    windupGuard = PID_WINDUPGUARD; //magic number
-	P = PID_PROPORTIONAL;
-	I = PID_INTEGRAL;
-	D = PID_DERIVATIVE;
-	previousPIDTime = current_time;
 	integratedError = 0.0;
 	lastError = 0.0;
     PIDValue = 0.0;
+    previousPIDTime = current_time;
+}
+
+void PID::init(double windup, double constant, double integral, double derivative){
+    windupGuard = windup; 
+	P = constant;
+	I = integral;
+	D = derivative;
 }
 
 PID::~PID(){
@@ -24,17 +27,7 @@ void PID::updatePID(double target, double current){
 
     double error = target - current;
 
-  /*  if(d.isLanded()){
-    
-        integratedError = 0.0;
-    } else {
-        integratedError += error * pTime;
-    } */
-
-    integratedError += error * pTime;
-
-	//printf("time : %lf\n", pTime);
-	//printf("error : %lf\n", integratedError);
+    integratedError += 0.0;
 
     previousPIDTime = constrain(integratedError, -(windupGuard), windupGuard);
     
@@ -43,11 +36,6 @@ void PID::updatePID(double target, double current){
     previousPIDTime = current_time;
 
     current_time = clock();
-/*
-    printf("diffTerm     : %lf\n", diffTerm);
-    printf("Integral     : %lf\n", (I * integratedError));
-    printf("Proportional : %lf\n", (P * error));
-*/
 
     PIDValue = (P * error) + (I * integratedError) + diffTerm;
 }

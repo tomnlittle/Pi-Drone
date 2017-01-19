@@ -40,8 +40,8 @@ SPI_Handler::SPI_Handler(){
 
     options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
 
-    options.c_cc[VTIME]=SERIAL_MIN_TIME;
-    options.c_cc[VMIN]=SERIAL_MIN_LENGTH;
+    options.c_cc[VTIME] = SERIAL_MIN_TIME;
+    options.c_cc[VMIN] = SERIAL_MIN_LENGTH;
 
 
     tcsetattr(serial_file_descriptor, TCSANOW, &options);
@@ -82,6 +82,7 @@ void SPI_Handler::serialWrite(uint8_t *data, int size){
     }
 
     write(serial_file_descriptor, data, size);
+    printf(".");
     tcdrain(serial_file_descriptor);
 }
 

@@ -2,16 +2,15 @@
 
 #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
 
-#define PID_PROPORTIONAL                2.0
-#define PID_INTEGRAL                    1.0
-#define PID_DERIVATIVE                  0.0
-#define PID_WINDUPGUARD                 0.375
+
 
 
 class PID {
     public:
         PID();
         ~PID();
+
+        void init(double, double, double, double);
 
         void updatePID(double target, double current);
         double getPID();

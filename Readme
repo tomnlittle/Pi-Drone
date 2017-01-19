@@ -44,3 +44,12 @@ PID systems
 http://robotics.stackexchange.com/questions/4721/how-to-convert-pid-outputs-to-appropriate-motor-speeds-for-a-quad-copter
 https://github.com/AeroQuad/AeroQuad/tree/master/AeroQuad
 
+Examination of the BNO055 Sensor 
+https://github.com/kriswiner/MPU-6050/wiki/Hardware-Sensor-Fusion-Solutions
+
+Fusing Sensor Data 
+https://developer3.oculus.com/blog/sensor-fusion-keeping-it-simple/
+
+PID systems
+http://www.expertune.com/tutor.aspx
+
