@@ -1,0 +1,55 @@
+
+
+Changes to the linux filesystem, ignoring setting up the wifi
+
+
+//This makes sure that i2c is always set to the right permissions each boot
+sudo nano /lib/udev/rules.d/60-i2c-tools.rules
+KERNEL=="i2c-0"     , GROUP="i2c", MODE="0660"
+KERNEL=="i2c-[1-9]*", GROUP="i2c", MODE="0666"
+
+
+//This was really useful resource
+
+http://robotics.stackexchange.com/questions/3137/how-to-use-quaternions-to-feed-a-pid-quadcopter-stabilization-loop
+
+
+
+Bosch BNO055 Driver
+https://github.com/BoschSensortec/BNO055_driver
+
+This fixed my serial tx/rx on the pi 
+http://raspberrypi.stackexchange.com/questions/47671/why-my-program-wont-communicate-through-ttyama0-on-raspbian-jessie
+
+this is just a serial port reference
+
+http://elinux.org/RPi_Serial_Connection#Connection_to_a_microcontroller_or_other_peripheral
+
+THE BEST EXPLANATION OF SERIAL PORT COMMUNICATION ON linux
+http://www.i-programmer.info/programming/cc/10027-serial-c-and-the-raspberry-pi.html?start=3
+
+Clock stretching bug
+http://www.advamation.com/knowhow/raspberrypi/rpi-i2c-bug.html
+
+3D vision
+https://erget.wordpress.com/2014/02/01/calibrating-a-stereo-camera-with-opencv/
+
+PID stabilisation loop
+http://robotics.stackexchange.com/questions/3137/how-to-use-quaternions-to-feed-a-pid-quadcopter-stabilization-loop
+
+Mixing C and C++ Code
+https://isocpp.org/wiki/faq/mixing-c-and-cpp
+
+PID systems 
+http://robotics.stackexchange.com/questions/4721/how-to-convert-pid-outputs-to-appropriate-motor-speeds-for-a-quad-copter
+https://github.com/AeroQuad/AeroQuad/tree/master/AeroQuad
+
+Examination of the BNO055 Sensor 
+https://github.com/kriswiner/MPU-6050/wiki/Hardware-Sensor-Fusion-Solutions
+
+Fusing Sensor Data 
+https://developer3.oculus.com/blog/sensor-fusion-keeping-it-simple/
+
+PID systems
+http://www.expertune.com/tutor.aspx
+
